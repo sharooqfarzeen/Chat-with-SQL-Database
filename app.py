@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+import os 
+from dotenv import load_dotenv
 
-from nl_to_sql import nl_to_sql
+from nl_to_sql import nl_to_sql, start_chat_session
 from retrieve_data import retrieve_data
 
 
@@ -10,6 +12,30 @@ from retrieve_data import retrieve_data
 
 # Title
 st.set_page_config(page_title="Chat with DB - CRUD")
+
+# Function to get api key from user if not already set
+@st.dialog("Enter Your API Key")
+def get_api():
+    api_key = st.text_input("Google Gemini API Key", type="password", help="Your API key remains secure and is not saved.")
+    if st.button("Submit"):
+        if api_key:
+            st.session_state["GOOGLE_API_KEY"] = api_key
+            st.success("API key set successfully!")
+            st.rerun()
+        else:
+            st.error("API key cannot be empty.")
+    st.markdown("[Create your Gemini API Key](https://aistudio.google.com/apikey)", unsafe_allow_html=True)
+
+# Loading API Keys
+load_dotenv()
+
+# Check if the API key is set
+if "GOOGLE_API_KEY" not in st.session_state:
+    if "GOOGLE_API_KEY" not in os.environ:
+        get_api()
+    else:
+        st.session_state["GOOGLE_API_KEY"] = os.environ["GOOGLE_API_KEY"]
+    st.session_state["chat_session"] = start_chat_session()
 
 # Header
 st.title("Chat with SQL DB")
@@ -87,7 +113,7 @@ if submit or user_query:
         # Retrieve data only if a db has been connected
         if st.session_state.db_name:
             # Convert Natural Language to SQL Query
-            query = nl_to_sql(prompt=user_query)
+            query = nl_to_sql(prompt=user_query, chat=st.session_state["chat_session"])
             # Retrieve data as a pandas dataframe from the DB
             table, success = retrieve_data(db_name=st.session_state.db_name, query=query)
             # If Operation was unsuccessful
