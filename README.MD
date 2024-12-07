@@ -1,4 +1,4 @@
-## [Try the app on streamlit](https://chat-with-sql-db.streamlit.app/)
+## [Try the app on Streamlit](https://chat-with-sql-db.streamlit.app/)
 
 **OR**
 
